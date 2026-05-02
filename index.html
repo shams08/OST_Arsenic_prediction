@@ -38,7 +38,8 @@
         var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
         // Safely parse the local URL to avoid Web Worker bugs
-        var url_to_geotiff_file = new URL("arsenic_cog.tif", window.location.href).href;
+        //var url_to_geotiff_file = new URL("arsenic_cog.tif", window.location.href).href;
+        var url_to_geotiff_file = "arsenic_cog.tif";
 
         parseGeoraster(url_to_geotiff_file).then(georaster => {
             
