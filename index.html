@@ -39,7 +39,8 @@
 
         // Safely parse the local URL to avoid Web Worker bugs
         //var url_to_geotiff_file = new URL("arsenic_cog.tif", window.location.href).href;
-        var url_to_geotiff_file = "arsenic_cog.tif";
+        //var url_to_geotiff_file = "arsenic_cog.tif";
+        var url_to_geotiff_file = "https://shams08.github.io/OST_Arsenic_prediction/arsenic_cog.tif";
 
         parseGeoraster(url_to_geotiff_file).then(georaster => {
             
