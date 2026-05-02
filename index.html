@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Arsenic Probability Dashboard</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; }
+        .leaflet-popup-content { font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/geotiff@2.0.5/dist-browser/geotiff.js"></script>
+    <script src="https://unpkg.com/georaster"></script>
+    <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+    <script src="https://unpkg.com/geoblaze"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
+
+    <script>
+        var map = L.map('map').setView([43.3, -102.5], 9);
+
+        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        });
+        osmLayer.addTo(map);
+
+        var baseMaps = { "OpenStreetMap": osmLayer };
+        var overlayMaps = {}; 
+        var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+        // Safely parse the local URL to avoid Web Worker bugs
+        var url_to_geotiff_file = new URL("arsenic_cog.tif", window.location.href).href;
+
+        parseGeoraster(url_to_geotiff_file).then(georaster => {
+            
+            // 1. Automatically extract the actual minimum and maximum values from your raster
+            var min = georaster.mins[0];
+            var max = georaster.maxs[0];
+            console.log("Map Range Detected:", min, "to", max);
+
+            // 2. Set the color scale from Blue to Yellow to Red based on the exact raster range
+            var colorScale = chroma.scale(['blue', 'yellow', 'red']).domain([min, max]);
+
+            var arsenicLayer = new GeoRasterLayer({
+                georaster: georaster,
+                opacity: 0.7,
+                resolution: 256,
+                pixelValuesToColorFn: function(pixelValues) {
+                    var prob = pixelValues[0];
+                    
+                    // 3. Only ignore official "No Data" background pixels. No more 0.1 cutoff!
+                    if (prob === georaster.noDataValue || prob === null || isNaN(prob)) {
+                        return null;
+                    }
+                    
+                    return colorScale(prob).hex();
+                }
+            });
+            
+            arsenicLayer.addTo(map);
+            map.fitBounds(arsenicLayer.getBounds());
+            layerControl.addOverlay(arsenicLayer, "Arsenic Probability > 10 µg/L");
+
+            // Pop-up logic
+            map.on('click', function(evt) {
+                if (map.hasLayer(arsenicLayer)) {
+                    var latlng = [evt.latlng.lng, evt.latlng.lat];
+                    var value = geoblaze.identify(georaster, latlng);
+                    
+                    if (value && value[0] !== georaster.noDataValue && value[0] !== null) {
+                        var percentage = (value[0] * 100).toFixed(1);
+                        var popupText = 'Chances of having arsenic over 10 µg/L = ' + percentage + '%';
+                        
+                        L.popup()
+                            .setLatLng(evt.latlng)
+                            .setContent(popupText)
+                            .openOn(map);
+                    }
+                }
+            });
+        }).catch(error => {
+            console.error("Error loading the GeoTIFF:", error);
+        });
+    </script>
+</body>
+</html>
