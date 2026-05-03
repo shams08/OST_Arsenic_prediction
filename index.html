@@ -65,19 +65,18 @@
             layerControl.addOverlay(arsenicLayer, "Arsenic Probability > 10 µg/L");
 
             // CLEAN, SIMPLE POP-UP LOGIC
-            map.on('click', function(evt) {
+            // 1. Add "async" right before function(evt)
+            map.on('click', async function(evt) {
                 if (map.hasLayer(arsenicLayer)) {
                     
-                    // Because your file is now in WGS84, we just use the raw coordinates!
                     var clickCoords = [evt.latlng.lng, evt.latlng.lat];
 
-                    // Ask Geoblaze for the value
-                    var value = geoblaze.identify(georaster, clickCoords);
+                    // 2. Add "await" right before geoblaze
+                    var value = await geoblaze.identify(georaster, clickCoords);
                     
                     console.log("Clicked Coordinates:", clickCoords);
                     console.log("Raw Raster Value returned by Geoblaze:", value);
                     
-                    // If we got a valid number back, draw the pop-up
                     if (value && value[0] !== georaster.noDataValue && value[0] !== null && !isNaN(value[0])) {
                         var percentage = (value[0] * 100).toFixed(1);
                         var popupText = 'Chances of having arsenic over 10 µg/L = ' + percentage + ' %';
