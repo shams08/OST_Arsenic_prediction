@@ -71,8 +71,9 @@
                     
                     var clickCoords;
                     
-                    // If the raster is in Web Mercator (3857), translate the Lat/Lng to Meters
-                    if (georaster.projection === 3857) {
+                    // Bulletproof check: If the raster's boundaries are outside the standard -180 to +180 GPS range,
+                    // we absolutely must translate the coordinates into Web Mercator meters.
+                    if (georaster.xmax > 180 || georaster.xmin < -180) {
                         var projectedCoords = L.CRS.EPSG3857.project(evt.latlng);
                         clickCoords = [projectedCoords.x, projectedCoords.y];
                     } else {
@@ -83,8 +84,7 @@
                     // Ask Geoblaze for the value at the translated coordinates
                     var value = geoblaze.identify(georaster, clickCoords);
                     
-                    // Secret developer log! Check your F12 console when you click to see the raw data.
-                    console.log("Clicked Lat/Lng:", evt.latlng);
+                    // Secret developer log! Check F12 console to verify the translation.
                     console.log("Translated Coords:", clickCoords);
                     console.log("Raw Raster Value returned by Geoblaze:", value);
                     
