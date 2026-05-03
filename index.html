@@ -44,10 +44,10 @@
 
         parseGeoraster(url_to_geotiff_file).then(georaster => {
             
-            // 1. Automatically extract the actual minimum and maximum values from your raster
-            var min = georaster.mins[0];
-            var max = georaster.maxs[0];
-            console.log("Map Range Detected:", min, "to", max);
+            // 1. Safely check for min/max. If the TIFF is missing metadata, default to 0 and 1.
+            var min = georaster.mins ? georaster.mins[0] : 0;
+            var max = georaster.maxs ? georaster.maxs[0] : 1;
+            console.log("Map Range Used:", min, "to", max);
 
             // 2. Set the color scale from Blue to Yellow to Red based on the exact raster range
             var colorScale = chroma.scale(['blue', 'yellow', 'red']).domain([min, max]);
