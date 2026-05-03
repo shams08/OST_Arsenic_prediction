@@ -47,7 +47,7 @@
 
             var colorScale = chroma.scale(['blue', 'yellow', 'red']).domain([min, max]);
 
-            var arsenicLayer = new GeoLayer({
+            var arsenicLayer = new GeoRasterLayer({
                 georaster: georaster,
                 opacity: 0.7,
                 resolution: 256,
