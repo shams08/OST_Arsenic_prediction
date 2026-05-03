@@ -44,11 +44,10 @@
             var min = georaster.mins ? georaster.mins[0] : 0;
             var max = georaster.maxs ? georaster.maxs[0] : 1;
             console.log("Map Range Used:", min, "to", max);
-            console.log("Raster Projection:", georaster.projection);
 
             var colorScale = chroma.scale(['blue', 'yellow', 'red']).domain([min, max]);
 
-            var arsenicLayer = new GeoRasterLayer({
+            var arsenicLayer = new GeoLayer({
                 georaster: georaster,
                 opacity: 0.7,
                 resolution: 256,
@@ -65,27 +64,17 @@
             map.fitBounds(arsenicLayer.getBounds());
             layerControl.addOverlay(arsenicLayer, "Arsenic Probability > 10 µg/L");
 
-            // UPDATED POP-UP LOGIC
+            // CLEAN, SIMPLE POP-UP LOGIC
             map.on('click', function(evt) {
                 if (map.hasLayer(arsenicLayer)) {
                     
-                    var clickCoords;
-                    
-                    // Bulletproof check: If the raster's boundaries are outside the standard -180 to +180 GPS range,
-                    // we absolutely must translate the coordinates into Web Mercator meters.
-                    if (georaster.xmax > 180 || georaster.xmin < -180) {
-                        var projectedCoords = L.CRS.EPSG3857.project(evt.latlng);
-                        clickCoords = [projectedCoords.x, projectedCoords.y];
-                    } else {
-                        // Otherwise, use standard GPS coordinates
-                        clickCoords = [evt.latlng.lng, evt.latlng.lat];
-                    }
+                    // Because your file is now in WGS84, we just use the raw coordinates!
+                    var clickCoords = [evt.latlng.lng, evt.latlng.lat];
 
-                    // Ask Geoblaze for the value at the translated coordinates
+                    // Ask Geoblaze for the value
                     var value = geoblaze.identify(georaster, clickCoords);
                     
-                    // Secret developer log! Check F12 console to verify the translation.
-                    console.log("Translated Coords:", clickCoords);
+                    console.log("Clicked Coordinates:", clickCoords);
                     console.log("Raw Raster Value returned by Geoblaze:", value);
                     
                     // If we got a valid number back, draw the pop-up
